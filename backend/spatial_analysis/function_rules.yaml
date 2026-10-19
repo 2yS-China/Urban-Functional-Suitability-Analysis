@@ -1,0 +1,542 @@
+# 功能适宜性评价规则配置
+# 定义各类功能的评价标准
+
+# 评价功能类型
+function_types:
+  - 居住
+  - 商业
+  - 办公
+  - 工业
+  - 公共服务
+  - 绿地休闲
+  - 综合
+
+# 居住功能评价规则
+居住:
+  description: "住宅用地适宜性评价"
+  weight: 1.0
+  criteria:
+    # 交通可达性
+    - feature: dist_to_metro
+      description: "距离地铁站距离"
+      weight: 0.12
+      direction: minimize
+      ideal_range: [0, 800]
+      acceptable_range: [0, 1500]
+      
+    - feature: dist_to_bus
+      description: "距离公交站距离"
+      weight: 0.08
+      direction: minimize
+      ideal_range: [0, 300]
+      acceptable_range: [0, 800]
+    
+    - feature: road_accessibility
+      description: "交通可达性综合指标"
+      weight: 0.10
+      direction: maximize
+      ideal_range: [0.6, 1.0]
+      acceptable_range: [0.3, 1.0]
+    
+    # 环境品质
+    - feature: green_density_500m
+      description: "500m范围内绿地密度"
+      weight: 0.10
+      direction: maximize
+      ideal_range: [0.15, 1.0]
+      acceptable_range: [0.05, 1.0]
+    
+    - feature: dist_to_water
+      description: "距水体距离（临水性）"
+      weight: 0.08
+      direction: minimize
+      ideal_range: [200, 1000]
+      acceptable_range: [0, 3000]
+    
+    - feature: annual_precipitation
+      description: "年降水量"
+      weight: 0.05
+      direction: optimize
+      ideal_range: [800, 1200]
+      acceptable_range: [600, 1600]
+    
+    # 配套设施
+    - feature: poi_density_commercial_500m
+      description: "500m范围内商业POI密度"
+      weight: 0.08
+      direction: maximize
+      ideal_range: [10, 50]
+      acceptable_range: [5, 100]
+      
+    - feature: poi_density_school_1000m
+      description: "1000m范围内学校密度"
+      weight: 0.10
+      direction: maximize
+      ideal_range: [1, 5]
+      acceptable_range: [0, 10]
+    
+    - feature: population_density_1000m
+      description: "人口密度"
+      weight: 0.05
+      direction: optimize
+      ideal_range: [5000, 15000]
+      acceptable_range: [2000, 25000]
+    
+    # 地形地质
+    - feature: elevation_mean
+      description: "平均高程"
+      weight: 0.03
+      direction: optimize
+      ideal_range: [50, 200]
+      acceptable_range: [0, 500]
+    
+    - feature: slope_mean
+      description: "平均坡度"
+      weight: 0.06
+      direction: minimize
+      ideal_range: [0, 5]
+      acceptable_range: [0, 15]
+    
+    - feature: geological_safety_score
+      description: "地质安全性（地质灾害易发性）"
+      weight: 0.06
+      direction: maximize
+      ideal_range: [0.7, 1.0]
+      acceptable_range: [0.5, 1.0]
+    
+    - feature: flood_safety_score
+      description: "洪涝安全性"
+      weight: 0.06
+      direction: maximize
+      ideal_range: [0.7, 1.0]
+      acceptable_range: [0.5, 1.0]
+    
+    # 经济与区位
+    - feature: city_center_radiation_normalized
+      description: "城市中心辐射强度"
+      weight: 0.05
+      direction: maximize
+      ideal_range: [0.4, 0.8]
+      acceptable_range: [0.2, 1.0]
+    
+    - feature: built_buffer_zone
+      description: "建成区缓冲距离等级"
+      weight: 0.05
+      direction: maximize
+      ideal_range: [2, 3]
+      acceptable_range: [1, 3]
+    
+    # 环境负面
+    - feature: dist_to_industrial
+      description: "距离工业区距离"
+      weight: 0.08
+      direction: maximize
+      ideal_range: [1000, 10000]
+      acceptable_range: [500, 10000]
+      
+  constraints:
+    # 硬约束：必须满足的条件
+    - feature: slope_mean
+      max: 15  # 坡度不超过15度
+    - feature: dist_to_major_road
+      min: 50  # 距离主干道至少50米（噪音）
+    - feature: in_ecological_redline
+      max: 0  # 不能在生态红线内
+    - feature: in_farmland_protection
+      max: 0  # 不能在基本农田内
+    - feature: flood_safety_score
+      min: 0.5  # 洪涝安全性至少中等
+    - feature: geological_safety_score
+      min: 0.5  # 地质安全性至少中等
+
+# 商业功能评价规则
+商业:
+  description: "商业服务用地适宜性评价"
+  weight: 1.0
+  criteria:
+    - feature: dist_to_metro
+      weight: 0.20
+      direction: minimize
+      ideal_range: [0, 500]
+      acceptable_range: [0, 1000]
+      
+    - feature: population_density_1000m
+      description: "1000m范围内人口密度"
+      weight: 0.15
+      direction: maximize
+      ideal_range: [5000, 20000]
+      acceptable_range: [2000, 30000]
+      
+    - feature: road_accessibility
+      weight: 0.15
+      direction: maximize
+      ideal_range: [0.7, 1.0]
+      acceptable_range: [0.4, 1.0]
+      
+    - feature: city_center_radiation_normalized
+      description: "城市中心辐射强度"
+      weight: 0.12
+      direction: maximize
+      ideal_range: [0.5, 1.0]
+      acceptable_range: [0.3, 1.0]
+    
+    - feature: gdp_density
+      description: "GDP密度（经济活力）"
+      weight: 0.10
+      direction: maximize
+      ideal_range: [5000, 50000]
+      acceptable_range: [1000, 100000]
+    
+    - feature: poi_density_commercial_500m
+      description: "已有商业聚集度"
+      weight: 0.10
+      direction: maximize
+      ideal_range: [20, 100]
+      acceptable_range: [5, 150]
+      
+    - feature: dist_to_residential
+      description: "距离居住区距离"
+      weight: 0.08
+      direction: minimize
+      ideal_range: [100, 1000]
+      acceptable_range: [0, 2000]
+      
+    - feature: visibility
+      description: "可见性（临主要道路）"
+      weight: 0.10
+      direction: maximize
+      ideal_range: [0.7, 1.0]
+      acceptable_range: [0.3, 1.0]
+  
+  constraints:
+    - feature: slope_mean
+      max: 10
+    - feature: in_ecological_redline
+      max: 0
+    - feature: flood_safety_score
+      min: 0.6
+
+# 办公功能评价规则
+办公:
+  description: "办公用地适宜性评价"
+  weight: 1.0
+  criteria:
+    - feature: dist_to_metro
+      weight: 0.20
+      direction: minimize
+      ideal_range: [0, 800]
+      acceptable_range: [0, 1500]
+      
+    - feature: road_accessibility
+      weight: 0.15
+      direction: maximize
+      ideal_range: [0.7, 1.0]
+      acceptable_range: [0.5, 1.0]
+      
+    - feature: city_center_radiation_normalized
+      weight: 0.15
+      direction: maximize
+      ideal_range: [0.6, 1.0]
+      acceptable_range: [0.4, 1.0]
+    
+    - feature: gdp_density
+      weight: 0.12
+      direction: maximize
+      ideal_range: [5000, 50000]
+      acceptable_range: [2000, 80000]
+      
+    - feature: poi_density_commercial_500m
+      weight: 0.10
+      direction: maximize
+      ideal_range: [15, 80]
+      acceptable_range: [5, 120]
+      
+    - feature: dist_to_business_center
+      description: "距离商务中心距离"
+      weight: 0.10
+      direction: minimize
+      ideal_range: [0, 3000]
+      acceptable_range: [0, 8000]
+      
+    - feature: office_cluster
+      description: "办公聚集度"
+      weight: 0.10
+      direction: maximize
+      ideal_range: [0.5, 1.0]
+      acceptable_range: [0.2, 1.0]
+      
+    - feature: green_density_500m
+      weight: 0.08
+      direction: maximize
+      ideal_range: [0.10, 1.0]
+      acceptable_range: [0.05, 1.0]
+  
+  constraints:
+    - feature: in_ecological_redline
+      max: 0
+    - feature: flood_safety_score
+      min: 0.6
+
+# 工业功能评价规则
+工业:
+  description: "工业用地适宜性评价"
+  weight: 1.0
+  criteria:
+    - feature: dist_to_highway
+      description: "距离高速公路距离"
+      weight: 0.20
+      direction: minimize
+      ideal_range: [500, 3000]
+      acceptable_range: [0, 8000]
+      
+    - feature: road_accessibility
+      weight: 0.15
+      direction: maximize
+      ideal_range: [0.5, 1.0]
+      acceptable_range: [0.3, 1.0]
+      
+    - feature: dist_to_residential
+      weight: 0.20
+      direction: maximize
+      ideal_range: [1000, 10000]
+      acceptable_range: [500, 15000]
+      
+    - feature: land_cost_index
+      description: "用地成本指数"
+      weight: 0.10
+      direction: minimize
+      ideal_range: [0.0, 0.4]
+      acceptable_range: [0.0, 0.7]
+      
+    - feature: industrial_cluster
+      description: "工业聚集度"
+      weight: 0.10
+      direction: maximize
+      ideal_range: [0.3, 1.0]
+      acceptable_range: [0.0, 1.0]
+    
+    - feature: soil_const_suitability
+      description: "土壤建设适宜性"
+      weight: 0.08
+      direction: maximize
+      ideal_range: [0.6, 1.0]
+      acceptable_range: [0.4, 1.0]
+    
+    - feature: slope_mean
+      weight: 0.07
+      direction: minimize
+      ideal_range: [0, 3]
+      acceptable_range: [0, 10]
+    
+    - feature: geological_safety_score
+      weight: 0.10
+      direction: maximize
+      ideal_range: [0.7, 1.0]
+      acceptable_range: [0.5, 1.0]
+      
+  constraints:
+    - feature: dist_to_residential
+      min: 500
+    - feature: dist_to_water
+      min: 1000
+    - feature: in_ecological_redline
+      max: 0
+    - feature: in_farmland_protection
+      max: 0
+    - feature: flood_safety_score
+      min: 0.5
+
+# 公共服务功能评价规则
+公共服务:
+  description: "公共服务设施用地适宜性评价"
+  weight: 1.0
+  criteria:
+    - feature: population_coverage_1500m
+      description: "1500m范围内人口覆盖"
+      weight: 0.25
+      direction: maximize
+      ideal_range: [10000, 50000]
+      acceptable_range: [5000, 80000]
+      
+    - feature: dist_to_metro
+      weight: 0.12
+      direction: minimize
+      ideal_range: [0, 1000]
+      acceptable_range: [0, 2000]
+      
+    - feature: road_accessibility
+      weight: 0.15
+      direction: maximize
+      ideal_range: [0.6, 1.0]
+      acceptable_range: [0.4, 1.0]
+      
+    - feature: existing_service_gap
+      description: "现有服务缺口"
+      weight: 0.18
+      direction: maximize
+      ideal_range: [0.5, 1.0]
+      acceptable_range: [0.2, 1.0]
+      
+    - feature: land_availability
+      description: "用地可获得性"
+      weight: 0.10
+      direction: maximize
+      ideal_range: [0.5, 1.0]
+      acceptable_range: [0.2, 1.0]
+    
+    - feature: city_center_radiation_normalized
+      weight: 0.10
+      direction: maximize
+      ideal_range: [0.4, 0.9]
+      acceptable_range: [0.2, 1.0]
+    
+    - feature: slope_mean
+      weight: 0.05
+      direction: minimize
+      ideal_range: [0, 5]
+      acceptable_range: [0, 12]
+    
+    - feature: flood_safety_score
+      weight: 0.05
+      direction: maximize
+      ideal_range: [0.7, 1.0]
+      acceptable_range: [0.5, 1.0]
+  
+  constraints:
+    - feature: in_ecological_redline
+      max: 0
+    - feature: slope_mean
+      max: 12
+
+# 绿地休闲功能评价规则
+绿地休闲:
+  description: "绿地与休闲用地适宜性评价"
+  weight: 1.0
+  criteria:
+    - feature: existing_green_ratio
+      description: "现有绿地比例（缺口）"
+      weight: 0.15
+      direction: minimize
+      ideal_range: [0.0, 0.10]
+      acceptable_range: [0.0, 0.30]
+      
+    - feature: population_density_800m
+      weight: 0.20
+      direction: maximize
+      ideal_range: [5000, 15000]
+      acceptable_range: [2000, 25000]
+      
+    - feature: dist_to_residential
+      weight: 0.15
+      direction: minimize
+      ideal_range: [100, 800]
+      acceptable_range: [0, 1500]
+      
+    - feature: ecological_value
+      description: "生态价值"
+      weight: 0.15
+      direction: maximize
+      ideal_range: [0.5, 1.0]
+      acceptable_range: [0.2, 1.0]
+      
+    - feature: water_proximity
+      description: "临水性"
+      weight: 0.15
+      direction: maximize
+      ideal_range: [0.3, 1.0]
+      acceptable_range: [0.0, 1.0]
+    
+    - feature: soil_agri_suitability
+      description: "土壤绿化适宜性"
+      weight: 0.08
+      direction: maximize
+      ideal_range: [0.6, 1.0]
+      acceptable_range: [0.3, 1.0]
+    
+    - feature: slope_mean
+      weight: 0.07
+      direction: optimize
+      ideal_range: [2, 10]
+      acceptable_range: [0, 20]
+    
+    - feature: annual_precipitation
+      weight: 0.05
+      direction: optimize
+      ideal_range: [800, 1400]
+      acceptable_range: [600, 1800]
+  
+  constraints:
+    - feature: slope_mean
+      max: 25
+    - feature: flood_safety_score
+      min: 0.4
+
+# 综合功能评价规则
+综合:
+  description: "综合用地适宜性评价（混合功能）"
+  weight: 1.0
+  criteria:
+    - feature: dist_to_metro
+      weight: 0.20
+      direction: minimize
+      ideal_range: [0, 500]
+      acceptable_range: [0, 1000]
+      
+    - feature: road_accessibility
+      weight: 0.15
+      direction: maximize
+      ideal_range: [0.7, 1.0]
+      acceptable_range: [0.5, 1.0]
+      
+    - feature: mixed_use_potential
+      description: "混合使用潜力"
+      weight: 0.25
+      direction: maximize
+      ideal_range: [0.6, 1.0]
+      acceptable_range: [0.4, 1.0]
+      
+    - feature: density_balance
+      description: "密度均衡性"
+      weight: 0.20
+      direction: maximize
+      ideal_range: [0.5, 1.0]
+      acceptable_range: [0.3, 1.0]
+      
+    - feature: connectivity
+      description: "连通性"
+      weight: 0.20
+      direction: maximize
+      ideal_range: [0.6, 1.0]
+      acceptable_range: [0.4, 1.0]
+
+# 评分函数配置
+scoring:
+  # 归一化方法
+  normalization: "min-max"  # min-max, z-score, sigmoid
+  
+  # 范围映射函数
+  range_mapping:
+    type: "linear"  # linear, exponential, sigmoid
+    
+  # 理想范围内得分
+  ideal_score: 1.0
+  
+  # 可接受范围内得分衰减
+  acceptable_decay: "linear"  # linear, exponential
+  
+  # 超出可接受范围得分
+  out_of_range_score: 0.0
+
+# 推荐策略配置
+recommendation:
+  # 推荐模式
+  mode: "max_score"  # max_score: 选择最高分, balanced: 平衡考虑, constraint_first: 约束优先
+  
+  # 最小可接受分数
+  min_acceptable_score: 0.4
+  
+  # 是否考虑空间协调
+  spatial_coordination: true
+  
+  # 邻接相容性权重
+  adjacency_weight: 0.15

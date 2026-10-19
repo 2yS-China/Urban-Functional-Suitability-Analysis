@@ -1,0 +1,256 @@
+# 字段映射配置
+# 用于将不同来源的数据字段映射到标准字段
+
+boundary:
+  description: "片区边界数据"
+  standard_fields:
+    - name: "片区名称"
+    - geometry: "边界几何"
+    - area: "面积（平方米）"
+  source_mappings:
+    default:
+      name: ["name", "Name", "区域名称", "片区名称"]
+      geometry: ["geometry", "geom", "the_geom"]
+      area: ["area", "Area", "面积"]
+    geojson:
+      name: "properties.name"
+      geometry: "geometry"
+    shapefile:
+      name: "NAME"
+      geometry: "geometry"
+
+poi:
+  description: "兴趣点数据"
+  standard_fields:
+    - category: "POI类别"
+    - name: "POI名称"
+    - type: "细分类型"
+  source_mappings:
+    default:
+      category: ["category", "type", "大类", "类别"]
+      name: ["name", "poi_name", "名称"]
+      type: ["subtype", "sub_type", "细分类型"]
+  category_mapping:
+    # POI类别标准化映射
+    交通设施:
+      - "地铁站"
+      - "公交站"
+      - "火车站"
+      - "机场"
+    商业服务:
+      - "购物中心"
+      - "超市"
+      - "商场"
+      - "便利店"
+      - "餐饮"
+    公共服务:
+      - "学校"
+      - "医院"
+      - "社区服务中心"
+      - "图书馆"
+      - "体育场馆"
+    绿地公园:
+      - "公园"
+      - "绿地"
+      - "广场"
+    办公场所:
+      - "写字楼"
+      - "商务中心"
+    工业仓储:
+      - "工厂"
+      - "仓库"
+      - "物流中心"
+
+roads:
+  description: "路网数据"
+  standard_fields:
+    - road_type: "道路类型"
+    - name: "道路名称"
+    - geometry: "线几何"
+    - width: "道路宽度"
+  source_mappings:
+    default:
+      road_type: ["type", "road_type", "道路类型"]
+      name: ["name", "road_name", "名称"]
+      geometry: ["geometry", "geom"]
+      width: ["width", "道路宽度"]
+  road_type_hierarchy:
+    # 道路等级映射（用于可达性分析）
+    1: ["高速公路", "快速路"]
+    2: ["主干道", "城市主干路"]
+    3: ["次干道", "城市次干路"]
+    4: ["支路", "社区道路"]
+
+parcels:
+  description: "地块数据（可选）"
+  standard_fields:
+    - parcel_id: "地块编号"
+    - geometry: "地块几何"
+    - land_use: "现状用地"
+    - area: "地块面积"
+  source_mappings:
+    default:
+      parcel_id: ["id", "parcel_id", "编号"]
+      geometry: ["geometry", "geom"]
+      land_use: ["land_use", "用地类型", "现状用地"]
+      area: ["area", "面积"]
+
+# 坐标系配置
+coordinate_systems:
+  supported:
+    - EPSG:4326  # WGS84 经纬度
+    - EPSG:3857  # Web Mercator
+    - EPSG:4490  # CGCS2000 大地坐标系
+    - EPSG:2333  # 北京54投影 3度带
+  default_output: EPSG:4326
+
+# 栅格数据配置
+raster:
+  description: "栅格数据（DEM、土地利用、遥感影像等）"
+  supported_formats:
+    - ".tif"
+    - ".tiff"
+    - ".img"
+    - ".asc"
+  types:
+    dem:
+      description: "数字高程模型"
+      unit: "米"
+      derived_features:
+        - "高程统计（均值、最小值、最大值）"
+        - "坡度（度或百分比）"
+        - "坡向"
+    landuse:
+      description: "土地利用/土地覆盖"
+      classification:
+        1: "耕地"
+        2: "林地"
+        3: "草地"
+        4: "水域"
+        5: "建设用地"
+        6: "未利用地"
+      derived_features:
+        - "各类用地占比"
+        - "主导土地利用类型"
+    precipitation:
+      description: "年降水量"
+      unit: "毫米"
+      derived_features:
+        - "平均年降水量"
+        - "降水分布均匀度"
+    soil_type:
+      description: "土壤类型"
+      classification:
+        1: "砂土"
+        2: "壤土"
+        3: "粘土"
+        4: "有机土"
+        5: "盐碱土"
+      derived_features:
+        - "主导土壤类型"
+        - "土壤适宜性等级"
+    gdp_density:
+      description: "GDP密度"
+      unit: "万元/平方公里"
+      derived_features:
+        - "平均GDP密度"
+        - "经济活力指数"
+    flood_risk:
+      description: "洪涝灾害风险"
+      classification:
+        1: "低风险"
+        2: "中低风险"
+        3: "中风险"
+        4: "中高风险"
+        5: "高风险"
+      derived_features:
+        - "风险等级"
+        - "受灾概率"
+    geological_hazard:
+      description: "地质灾害易发性"
+      classification:
+        1: "不易发"
+        2: "低易发"
+        3: "中易发"
+        4: "高易发"
+        5: "极高易发"
+      derived_features:
+        - "易发性等级"
+        - "综合风险指数"
+    ndvi:
+      description: "归一化植被指数"
+      range: [-1, 1]
+      derived_features:
+        - "平均NDVI"
+        - "植被覆盖度"
+    temperature:
+      description: "地表温度"
+      unit: "摄氏度或开尔文"
+      derived_features:
+        - "平均温度"
+        - "热岛强度"
+
+# 矢量约束数据配置
+vector_constraints:
+  water_bodies:
+    description: "水体数据"
+    geometry_type: ["Polygon", "MultiPolygon"]
+    standard_fields:
+      - water_type: "水体类型（河流/湖泊/水库）"
+      - name: "水体名称"
+    derived_features:
+      - "距最近水体距离"
+      - "临水性指数"
+  
+  ecological_redline:
+    description: "生态保护红线"
+    geometry_type: ["Polygon", "MultiPolygon"]
+    standard_fields:
+      - protection_level: "保护等级"
+      - category: "保护类别"
+    derived_features:
+      - "是否在生态红线内"
+      - "距生态红线距离"
+  
+  farmland_protection:
+    description: "基本农田保护区"
+    geometry_type: ["Polygon", "MultiPolygon"]
+    standard_fields:
+      - quality_grade: "农田质量等级"
+      - area: "保护面积"
+    derived_features:
+      - "是否在基本农田内"
+      - "距基本农田距离"
+  
+  built_area:
+    description: "建成区范围"
+    geometry_type: ["Polygon", "MultiPolygon"]
+    standard_fields:
+      - build_year: "建成年份"
+      - intensity: "建设强度"
+    derived_features:
+      - "距建成区边界距离"
+      - "建成区缓冲带等级"
+  
+  city_center:
+    description: "城市中心点"
+    geometry_type: ["Point"]
+    standard_fields:
+      - center_type: "中心类型（行政/商务/文化）"
+      - importance: "重要性等级"
+    derived_features:
+      - "距城市中心距离"
+      - "城市中心辐射强度"
+
+# 数据验证规则
+validation_rules:
+  boundary:
+    geometry_type: ["Polygon", "MultiPolygon"]
+    min_area: 10000  # 最小面积10000平方米（约0.01平方公里）
+    max_area: 50000000  # 最大面积50平方公里
+  poi:
+    geometry_type: ["Point"]
+    required_fields: ["category", "location"]
+  roads:
+    geometry_type: ["LineString", "MultiLineString"]
+    min_length: 10  # 最小长度10米
