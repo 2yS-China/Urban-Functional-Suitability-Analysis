@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>城市片区功能适宜性分析系统</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        /* 布局 */
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        /* 左侧面板 */
+        .sidebar {
+            width: 320px;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+        }
+        
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid #ddd;
+            background: #fff;
+        }
+        
+        .sidebar-header h1 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        
+        /* 主内容区 */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .main-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #ddd;
+            background: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .main-content {
+            flex: 1;
+            position: relative;
+        }
+        
+        /* 地图 */
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* 通用组件 */
+        .section {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            padding: 12px;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            color: #333;
+        }
+        
+        .btn:hover {
+            background: #f8f9fa;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: #fff;
+            border-color: #007bff;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-sm {
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+        
+        input[type="text"],
+        input[type="file"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        
+        /* 项目列表 */
+        .project-list {
+            list-style: none;
+        }
+        
+        .project-item {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            background: #fff;
+        }
+        
+        .project-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .project-item.active {
+            border-color: #007bff;
+            background: #e7f3ff;
+        }
+        
+        .project-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .project-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* 数据状态 */
+        .data-status {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            background: #e9ecef;
+            color: #666;
+        }
+        
+        .status-badge.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        /* 任务进度 */
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: #007bff;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 12px;
+        }
+        
+        /* 问答面板 */
+        .qa-messages {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 12px;
+            background: #fff;
+        }
+        
+        .qa-message {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .qa-message:last-child {
+            border-bottom: none;
+        }
+        
+        .qa-question {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #007bff;
+        }
+        
+        .qa-answer {
+            color: #333;
+            white-space: pre-wrap;
+        }
+        
+        /* 加载状态 */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .stat-card {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fff;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #007bff;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        /* 图层控制面板 */
+        .layer-control {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            width: 250px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        
+        .layer-control-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        
+        .layer-control-body {
+            padding: 12px 16px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .layer-item {
+            margin-bottom: 12px;
+        }
+        
+        .layer-item label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .layer-item input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        
+        .layer-control-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 16px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 999;
+        }
+        
+        .layer-control-btn:hover {
+            background: #f8f9fa;
+        }
+        
+        /* POI标记样式 */
+        .poi-marker {
+            background: white;
+            border-radius: 50%;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧面板 -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>城市片区功能适宜性分析</h1>
+                <p style="font-size: 12px; color: #666;">v0.1.0</p>
+            </div>
+            
+            <div class="sidebar-content" id="sidebarContent">
+                <!-- 视图1: 项目列表 -->
+                <div id="viewProjectList">
+                    <div class="section">
+                        <button class="btn btn-primary" style="width: 100%;" onclick="showCreateProject()">+ 新建项目</button>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">项目列表</div>
+                        <ul class="project-list" id="projectList">
+                            <li class="loading">加载中...</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- 视图2: 创建项目 -->
+                <div id="viewCreateProject" class="hidden">
+                    <div class="section">
+                        <button class="btn btn-sm" onclick="showProjectList()">&larr; 返回</button>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">创建新项目</div>
+                        <form onsubmit="createProject(event)">
+                            <label>项目名称</label>
+                            <input type="text" id="projectName" required>
+                            
+                            <label>项目描述</label>
+                            <textarea id="projectDesc" rows="3"></textarea>
+                            
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">创建</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- 视图3: 项目工作区 -->
+                <div id="viewWorkspace" class="hidden">
+                    <div class="section">
+                        <button class="btn btn-sm" onclick="showProjectList()">&larr; 返回列表</button>
+                        <button class="btn btn-sm" style="float: right;" onclick="deleteCurrentProject()">删除项目</button>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">当前项目</div>
+                        <div id="currentProjectInfo"></div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">数据上传</div>
+                        <div id="dataUploadArea"></div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">分析配置</div>
+                        <form onsubmit="startAnalysis(event)">
+                            <label>网格大小(米)</label>
+                            <select id="gridSize">
+                                <option value="50">50</option>
+                                <option value="100" selected>100</option>
+                                <option value="200">200</option>
+                            </select>
+                            
+                            <label>缓冲半径(米)</label>
+                            <select id="bufferRadius">
+                                <option value="300">300</option>
+                                <option value="500" selected>500</option>
+                                <option value="1000">1000</option>
+                            </select>
+                            
+                            <button type="submit" class="btn btn-primary" style="width: 100%;" id="analyzeBtn">开始分析</button>
+                        </form>
+                        
+                        <div id="taskProgress" class="hidden" style="margin-top: 12px;">
+                            <div class="progress">
+                                <div class="progress-bar" id="progressBar">0%</div>
+                            </div>
+                            <p id="taskMessage" style="font-size: 12px; color: #666;"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="section" id="resultsSection" class="hidden">
+                        <div class="section-title">分析结果</div>
+                        <div id="resultStats"></div>
+                    </div>
+                    
+                    <div class="section" id="qaSection" class="hidden">
+                        <div class="section-title">知识问答</div>
+                        <div class="qa-messages" id="qaMessages"></div>
+                        <input type="text" id="qaInput" placeholder="输入问题...">
+                        <button class="btn btn-primary" style="width: 100%; margin-top: 8px;" onclick="askQuestion()">提问</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主内容区 -->
+        <div class="main">
+            <div class="main-header">
+                <div id="mainTitle">欢迎使用</div>
+                <div id="mainActions"></div>
+            </div>
+            
+            <div class="main-content">
+                <div id="map">
+                    <!-- 图层控制面板 -->
+                    <div id="layerControl" class="layer-control hidden">
+                        <div class="layer-control-header">
+                            <strong>图层控制</strong>
+                            <button onclick="toggleLayerControl()" style="float: right; border: none; background: none; cursor: pointer;">✕</button>
+                        </div>
+                        <div class="layer-control-body">
+                            <!-- 基础数据 -->
+                            <div style="font-size: 12px; font-weight: bold; color: #666; margin: 8px 0 4px 0;">基础数据</div>
+                            <div class="layer-item">
+                                <label>
+                                    <input type="checkbox" id="layer_boundary" onchange="toggleLayer('boundary')" checked>
+                                    边界
+                                </label>
+                            </div>
+                            <div class="layer-item">
+                                <label>
+                                    <input type="checkbox" id="layer_poi" onchange="toggleLayer('poi')" checked>
+                                    POI点位
+                                </label>
+                            </div>
+                            <div class="layer-item">
+                                <label>
+                                    <input type="checkbox" id="layer_roads" onchange="toggleLayer('roads')" checked>
+                                    路网
+                                </label>
+                            </div>
+                            <div class="layer-item">
+                                <label>
+                                    <input type="checkbox" id="layer_water_bodies" onchange="toggleLayer('water_bodies')">
+                                    水体
+                                </label>
+                            </div>
+                            
+                            <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
+                            
+                            <!-- 地形环境 -->
+                            <div style="font-size: 12px; font-weight: bold; color: #666; margin: 8px 0 4px 0;">地形环境</div>
+                            <div class="layer-item">
+                                <label>
+                                    <input type="checkbox" id="layer_dem" onchange="toggleLayer('dem')">
+                                    地形(DEM)
+                                </label>
+                            </div>
+                            <div class="layer-item">
+                                <label>
+                                    <input type="checkbox" id="layer_landuse" onchange="toggleLayer('landuse')">
+                                    土地利用
+                                </label>
+                            </div>
+                            <div class="layer-item">
+                                <label>
+                                    <input type="checkbox" id="layer_soil_type" onchange="toggleLayer('soil_type')">
+                                    土壤类型
+                                </label>
+                            </div>
+                            <div class="layer-item">
+                                <label>
+                                    <input type="checkbox" id="layer_precipitation" onchange="toggleLayer('precipitation')">
+                                    降水分布
+                                </label>
+                            </div>
+                            
+                            <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
+                            
+                            <!-- 约束条件 -->
+                            <div style="font-size: 12px; font-weight: bold; color: #666; margin: 8px 0 4px 0;">约束条件</div>
+                            <div class="layer-item">
+                                <label>
+                                    <input type="checkbox" id="layer_ecological_redline" onchange="toggleLayer('ecological_redline')">
+                                    生态红线
+                                </label>
+                            </div>
+                            <div class="layer-item">
+                                <label>
+                                    <input type="checkbox" id="layer_farmland_protection" onchange="toggleLayer('farmland_protection')">
+                                    基本农田
+                                </label>
+                            </div>
+                            <div class="layer-item">
+                                <label>
+                                    <input type="checkbox" id="layer_built_area" onchange="toggleLayer('built_area')">
+                                    建成区
+                                </label>
+                            </div>
+                            <div class="layer-item">
+                                <label>
+                                    <input type="checkbox" id="layer_city_center" onchange="toggleLayer('city_center')">
+                                    城市中心
+                                </label>
+                            </div>
+                            
+                            <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
+                            
+                            <!-- 风险评估 -->
+                            <div style="font-size: 12px; font-weight: bold; color: #666; margin: 8px 0 4px 0;">风险评估</div>
+                            <div class="layer-item">
+                                <label>
+                                    <input type="checkbox" id="layer_flood_risk" onchange="toggleLayer('flood_risk')">
+                                    洪涝风险
+                                </label>
+                            </div>
+                            <div class="layer-item">
+                                <label>
+                                    <input type="checkbox" id="layer_geological_hazard" onchange="toggleLayer('geological_hazard')">
+                                    地质灾害
+                                </label>
+                            </div>
+                            <div class="layer-item">
+                                <label>
+                                    <input type="checkbox" id="layer_gdp_density" onchange="toggleLayer('gdp_density')">
+                                    GDP密度
+                                </label>
+                            </div>
+                            
+                            <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
+                            
+                            <!-- 分析结果 -->
+                            <div style="font-size: 12px; font-weight: bold; color: #666; margin: 8px 0 4px 0;">分析结果</div>
+                            <div class="layer-item">
+                                <label>
+                                    <input type="checkbox" id="layer_results" onchange="toggleLayer('results')" checked>
+                                    分析结果
+                                </label>
+                            </div>
+                            
+                            <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
+                            
+                            <div class="layer-item">
+                                <label>结果显示功能：</label>
+                                <select id="resultFunctionType" onchange="changeResultFunction()" style="width: 100%; margin-top: 4px;">
+                                    <option value="recommended">推荐功能</option>
+                                    <option value="居住">居住</option>
+                                    <option value="商业">商业</option>
+                                    <option value="办公">办公</option>
+                                    <option value="工业">工业</option>
+                                    <option value="公共服务">公共服务</option>
+                                    <option value="绿地休闲">绿地休闲</option>
+                                    <option value="综合">综合</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 图层控制按钮 -->
+                    <button id="layerControlBtn" class="layer-control-btn" onclick="toggleLayerControl()">
+                        🗺️ 图层
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
